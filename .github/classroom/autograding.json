@@ -1,0 +1,124 @@
+{
+  "tests": [
+    {
+      "name": "Compiles and Executes",
+      "setup": "sudo apt install libsystemc-dev; cd hw; wget https://neu-ece-7368.github.io/lab2-ref/swEmu.o; touch swEmu.o; git submodule update --init --recursive; make testbench",
+      "run": "hw/testbench; echo $? > result.txt",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "CSR should return same value after writing",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 1",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "CSR return to idle after processing delay",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 2",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "write read Vector A",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 3",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "write read Vector B",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 4",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "write read Vector C",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 5",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "vector should be idle",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 6",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "Operation Add",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 7",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "Operation Subtract",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 8",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "Operation Multiply",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 9",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "Operation Divide",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 10",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "Operation MAC",
+      "setup": "",
+      "run": "res=`cat result.txt` && echo \"Evaluate based on exit code $res\" && /usr/bin/test $res -eq 0 -o $res -gt 11",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 1
+    }
+  ]
+}
