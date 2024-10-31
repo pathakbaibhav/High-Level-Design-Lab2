@@ -1,6 +1,6 @@
 CFLAGS+=-g -O2
-TARGET=debugread
-SOURCE=debugread.c
+TARGET=vector_testbench
+SOURCE=vector_testbench.c
 DEBUG_PORT?=10024
 QEMU_HOSTNAME?=qemu
 QEMU_DEBUG_PORT_FILE:=$(HOME)/.qemu-dbg-port
