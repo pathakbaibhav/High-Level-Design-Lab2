@@ -12,6 +12,7 @@ class vector_processor
 public:
 	tlm_utils::simple_target_socket<vector_processor> socket;
 	sc_out<bool> irq;
+	uint32_t CSR = 0;  // Control Status Register initialized to 0
 
 	vector_processor(sc_core::sc_module_name name);
 	virtual void b_transport(tlm::tlm_generic_payload &trans,

@@ -73,6 +73,10 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 				 << " " << now << " diff=" << diff << "\n";
 			old_ts = now;
 			break;
+		case 0x0:  // CSR read operation
+            v = CSR;  // Read the CSR value
+			cout << "CSR: " << v << "\n";
+			break;
 		default:
 			break;
 		}
@@ -89,6 +93,8 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 				 << hex << *(uint32_t *)data
 				 << ", " << now << " diff=" << diff << "\n";
 			old_ts = now;
+		case 0x0:  // CSR write operation
+            CSR = *(uint32_t*)data;  // Write data to CSR
 		default:
 			break;
 		}
