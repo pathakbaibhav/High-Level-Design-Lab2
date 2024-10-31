@@ -12,7 +12,9 @@
 
 #define MESSAGE_OFFSET (0x04)
 
-#define ERROR_ADDR_OFFSET (0xf0)
+//#define ERROR_ADDR_OFFSET (0xf0)
+
+#define STOP_SIM_OFFSET (0x08)
 
 int main(int argc, char *argv[])
 {
@@ -50,8 +52,17 @@ int main(int argc, char *argv[])
 	printf("Message sent to debug device: %s\n", msg);
 
 	//Task 3.2
-	int val = *((volatile int *)(pDev + ERROR_ADDR_OFFSET));
-	printf("Value read from address 0x%x: %d\n", ERROR_ADDR_OFFSET, val);
-		
+	// int val = *((volatile int *)(pDev + ERROR_ADDR_OFFSET));
+	// printf("Value read from address 0x%x: %d\n", ERROR_ADDR_OFFSET, val);
+
+	//Task 3.3
+	// Timer reading
+    uint64_t timer_val = *((uint64_t *)(pDev));
+    printf("Final TIMER value read: %" PRIu64 "\n", timer_val);
+
+    // Stop simulation
+    *(volatile uint32_t *)(pDev + STOP_SIM_OFFSET) = 1;  // Writing to 0x8 to stop the simulation
+    printf("Simulation stop command sent.\n");
+
 	return 0; 
 }
