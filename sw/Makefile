@@ -1,4 +1,4 @@
-CFLAGS+=-g
+CFLAGS+=-g -O0
 TARGET=debugread
 SOURCE=debugread.c
 DEBUG_PORT?=10024

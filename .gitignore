@@ -43,3 +43,6 @@ sw/debugread
 sw/vector_testbench
 hw/zynq_demo
 hw/testbench
+
+# Makefile Debugging
+.code-workspace

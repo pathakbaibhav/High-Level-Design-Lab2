@@ -5,7 +5,7 @@ endif
 
 ifneq ($(SYSTEMC),)
 # If SystemC is manually built, must match C++std
-	SYSTEMC_LIBS ?= lib64
+	SYSTEMC_LIBS ?= lib-linuxaarch64
 	SYSTEMC_CSTD ?= 14
 	CFLAGS += -I$(SYSTEMC)/include
 	CXXFLAGS += $(CFLAGS) -std=c++$(SYSTEMC_CSTD)
