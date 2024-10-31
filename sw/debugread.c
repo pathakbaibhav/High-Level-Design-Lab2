@@ -12,6 +12,8 @@
 
 #define MESSAGE_OFFSET (0x04)
 
+#define ERROR_ADDR_OFFSET (0xf0)
+
 int main(int argc, char *argv[])
 {
 	int fd;       /// file descriptor to phys mem
@@ -46,6 +48,10 @@ int main(int argc, char *argv[])
 
 	*msg_reg = *(unsigned char *)"\n";
 	printf("Message sent to debug device: %s\n", msg);
+
+	//Task 3.2
+	int val = *((volatile int *)(pDev + ERROR_ADDR_OFFSET));
+	printf("Value read from address 0x%x: %d\n", ERROR_ADDR_OFFSET, val);
 		
 	return 0; 
 }
