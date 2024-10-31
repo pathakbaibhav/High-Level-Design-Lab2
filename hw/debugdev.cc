@@ -74,7 +74,7 @@ void debugdev::b_transport(tlm::tlm_generic_payload &trans, sc_time &delay)
 	if (trans.get_command() == tlm::TLM_READ_COMMAND)
 	{
 		sc_time now = sc_time_stamp() + delay;
-		uint32_t v = 0;
+		uint64_t v = 0;
 
 		switch (addr)
 		{
