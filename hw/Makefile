@@ -17,8 +17,8 @@ endif
 COSIM_PATH ?= $(HOME)/.cosim
 COSIM_QUANTUM ?= 100000
 
-CFLAGS += -Wall -O2 -g
-CXXFLAGS += -Wall -O2 -g
+CFLAGS += -Wall -O0 -g
+CXXFLAGS += -Wall -O0 -g
 
 CPPFLAGS += -I .
 LDLIBS   += -pthread
