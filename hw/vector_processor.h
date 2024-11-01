@@ -14,7 +14,6 @@ public:
 	sc_out<bool> irq;
 	uint32_t CSR = 0;  // Control Status Register initialized to 0
 
-<<<<<<< HEAD
 	sc_event start;	// Start event from issue 4
 
 	// Vectors initialization - may need to make this one array later on
@@ -24,18 +23,6 @@ public:
 
 	vector_processor(sc_core::sc_module_name name);
 	void op_thread();
-=======
-	sc_event start;		// Event to trigger operation start
-
-	uint32_t VA[16];
-	uint32_t VB[16];
-	uint32_t VC[16];
-	
-	vector_processor(sc_core::sc_module_name name);
-
-	void op_thread();	//Declare the operation simulation thread
-
->>>>>>> eb96f45 (Issue #4: Made a few corrections)
 	virtual void b_transport(tlm::tlm_generic_payload &trans,
 							 sc_time &delay);
 	virtual unsigned int transport_dbg(tlm::tlm_generic_payload &trans);
