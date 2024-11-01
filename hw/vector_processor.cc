@@ -95,6 +95,23 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 		default:
 			break;
 		}
+
+		/** Need to use if-else here to deal with range of addresses*/
+		if (addr >= 0x04 && addr < 0x44) {	// Read VA
+			int idx = addr - 0x4;
+			// cout << VA[idx] << endl;
+			v = VA[idx];
+		} else if (addr >= 0x44 && addr < 0x84) {	// Read VB
+			int idx = addr - 0x44;
+			// cout << VB[idx] << endl;
+			v = VB[idx];
+		} else if (addr >= 0x84 && addr < 0xC4) { 	// Re3ad VC
+			int idx = addr - 0x84;
+			// cout << VC[idx] << endl;
+			v = VC[idx];
+		}
+
+
 		memcpy(data, &v, len);
 
 	// handle write commands
@@ -123,6 +140,20 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 		default:
 			break;
 		}
+
+		/** Need to use if-else here to deal with range of addresses*/
+		if (addr >= 0x04 && addr < 0x44) {
+			int idx = addr - 0x4;
+			VA[idx] = *(uint32_t*)data;
+		} else if (addr >= 0x44 && addr < 0x84) {
+			int idx = addr - 0x44;
+			VB[idx] = *(uint32_t*)data;
+		} else if (addr >= 0x84 && addr < 0xC4) {
+			int idx = addr - 0x84;
+			VC[idx] = *(uint32_t*)data;
+		}
+
+
 	} else {
 		// no other commands supported
 		trans.set_response_status(tlm::TLM_COMMAND_ERROR_RESPONSE);

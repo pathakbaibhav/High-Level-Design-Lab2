@@ -76,11 +76,14 @@ int main(int argc, char *argv[])
 
 	// Issue 3: Task 2.2
 	// Write and verify CSR value in vector processor
-	uint32_t write_val = 07;
-	*((volatile uint32_t *)(pVecProc + 0x0)) = write_val;  // Write to CSR
+	// uint32_t write_val = 07;
+	// *((volatile uint32_t *)(pVecProc + 0x0)) = write_val;  // Write to CSR
 	
-	uint32_t read_val = *((volatile uint32_t *)(pVecProc + 0x0));  // Read back from CSR
-	printf("CSR written value: %u, CSR read value: %u\n", write_val, read_val);
+	// uint32_t read_val = *((volatile uint32_t *)(pVecProc + 0x0));  // Read back from CSR
+	// printf("CSR written value: %u, CSR read value: %u\n", write_val, read_val);
+
+	// Issue 4: Task 2.1
+	uint32_t write_val = 1;
 
 
 	return 0; 

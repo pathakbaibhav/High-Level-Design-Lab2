@@ -14,6 +14,11 @@ public:
 	sc_out<bool> irq;
 	uint32_t CSR = 0;  // Control Status Register initialized to 0
 
+	// Vectors initialization - may need to make this one array later on
+	uint32_t VA[16];
+	uint32_t VB[16];
+	uint32_t VC[16];
+
 	vector_processor(sc_core::sc_module_name name);
 	virtual void b_transport(tlm::tlm_generic_payload &trans,
 							 sc_time &delay);
