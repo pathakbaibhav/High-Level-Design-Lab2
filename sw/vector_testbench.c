@@ -100,6 +100,9 @@ int main(int argc, char *argv[])
 
 	// Output
 	printf("QEMU start time: %lds %ldms			SystemC End Time: %uns\n\n", tv.tv_sec, tv.tv_usec, time_val);
+
+
+	/** Issue 5 */
 	
 
 	return 0; 

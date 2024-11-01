@@ -108,24 +108,25 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
             v = CSR;  // Read the CSR value
 			cout << "CSR: " << v << "\n";
 			break;
+		case 0x04:	// VA base address is in data	-- might have to deal with length here
+			for (int i=0;i<16;i++) {
+				VA[i]= data + (4*i);	// Read from VA
+			}
+			break;
+		case 0x44:	// VB base addresss is in data
+			for (int i=0;i<16;i++) {
+				VB[i]= data + (4*i);	// Read from VB
+			}
+			break;
+		case 0x84:	// VC base address is in data
+			for (int i=0;i<16;i++) {
+				VC[i]= data + (4*i);	// Read from VC
+			}
+			break;
 		default:
 			break;
 		}
 
-		/** Need to use if-else here to deal with range of addresses*/
-		if (addr >= 0x04 && addr < 0x44) {	// Read VA
-			int idx = addr - 0x4;
-			// cout << VA[idx] << endl;
-			v = VA[idx];
-		} else if (addr >= 0x44 && addr < 0x84) {	// Read VB
-			int idx = addr - 0x44;
-			// cout << VB[idx] << endl;
-			v = VB[idx];
-		} else if (addr >= 0x84 && addr < 0xC4) { 	// Re3ad VC
-			int idx = addr - 0x84;
-			// cout << VC[idx] << endl;
-			v = VC[idx];
-		}
 
 		memcpy(data, &v, len);
 
@@ -149,22 +150,26 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 				// start.notify(SC_ZERO_TIME);	// need the SC_ZERO_TIME?
 			}
 			break;
+		case 0x04:	// VA base address is in data	-- might have to deal with length here
+			for (int i=0;i<16;i++) {
+				*(uint32_t*)(data + (4*i)) = VA[i];	// Write to VA
+			}
+			break;
+		case 0x44:	// VB base addresss is in data
+			for (int i=0;i<16;i++) {
+				*(uint32_t*)(data + (4*i)) = VB[i];	// Write to VA
+			}
+			break;
+		case 0x84:	// VC base address is in data
+			for (int i=0;i<16;i++) {
+				*(uint32_t*)(data + (4*i)) = VC[i];	// Write to VA
+			}
+			break; 
 
 		default:
 			break;
 		}
 
-		/** Need to use if-else here to deal with range of addresses*/
-		if (addr >= 0x04 && addr < 0x44) {
-			int idx = addr - 0x4;
-			VA[idx] = *(uint32_t*)data;
-		} else if (addr >= 0x44 && addr < 0x84) {
-			int idx = addr - 0x44;
-			VB[idx] = *(uint32_t*)data;
-		} else if (addr >= 0x84 && addr < 0xC4) {
-			int idx = addr - 0x84;
-			VC[idx] = *(uint32_t*)data;
-		}
 
 	} else {
 		// no other commands supported
