@@ -16,27 +16,16 @@ using namespace std;
 #include <sys/types.h>
 #include <time.h>
 
-#include <systemc.h>
+#include <systemc>
 
 vector_processor::vector_processor(sc_module_name name)
-	: sc_module(name), socket("socket")
+	: sc_module(name), socket("socket"), CSR(0)
 {
 	socket.register_b_transport(this, &vector_processor::b_transport);
 	socket.register_transport_dbg(this, &vector_processor::transport_dbg);
+
+	SC_HAS_PROCESS(vector_processor);
 	SC_THREAD(op_thread);	// New SC Thread from issue 4
-}
-
-// SCThread op
-void vector_processor::op_thread()
-{
-	const sc_time delay = sc_time(5, SC_MS);
-
-	for(;;) {
-		wait(start);	// Wait on event start
-		wait(delay);	// Wait for 5ms
-
-		CSR = 0x0;		// opperation concluded, set to 0x0
-	}
 }
 
 // Processing thread function to simulate operation delay
@@ -46,7 +35,7 @@ void vector_processor::op_thread()
 
 	for(;;) {
 		wait(start);	// Wait on event start
-		wait(delay);	// Simulate 5 ms processing delay
+		wait(5, SC_MS);	// Simulate 5 ms processing delay 
 
 		CSR = 0x0;		// Operation concluded, set to 0x0
 	}
@@ -111,22 +100,6 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 		default:
 			break;
 		}
-
-		/** Need to use if-else here to deal with range of addresses*/
-		if (addr >= 0x04 && addr < 0x44) {	// Read VA
-			int idx = addr - 0x4;
-			// cout << VA[idx] << endl;
-			v = VA[idx];
-		} else if (addr >= 0x44 && addr < 0x84) {	// Read VB
-			int idx = addr - 0x44;
-			// cout << VB[idx] << endl;
-			v = VB[idx];
-		} else if (addr >= 0x84 && addr < 0xC4) { 	// Re3ad VC
-			int idx = addr - 0x84;
-			// cout << VC[idx] << endl;
-			v = VC[idx];
-		}
-
 		memcpy(data, &v, len);
 
 	// handle write commands
@@ -143,7 +116,9 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 		case 0x0:  // CSR write operation
             CSR = *(uint32_t*)data;  // Write data to CSR
 			// Check if LSB is set
-			if (CSR & 0x1) {
+			if (CSR & 0x1) 
+			{
+				cout << "Starting the event: \n";
 				// Set the start event
 				start.notify();
 				// start.notify(SC_ZERO_TIME);	// need the SC_ZERO_TIME?
@@ -153,19 +128,6 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 		default:
 			break;
 		}
-
-		/** Need to use if-else here to deal with range of addresses*/
-		if (addr >= 0x04 && addr < 0x44) {
-			int idx = addr - 0x4;
-			VA[idx] = *(uint32_t*)data;
-		} else if (addr >= 0x44 && addr < 0x84) {
-			int idx = addr - 0x44;
-			VB[idx] = *(uint32_t*)data;
-		} else if (addr >= 0x84 && addr < 0xC4) {
-			int idx = addr - 0x84;
-			VC[idx] = *(uint32_t*)data;
-		}
-
 	} else {
 		// no other commands supported
 		trans.set_response_status(tlm::TLM_COMMAND_ERROR_RESPONSE);
