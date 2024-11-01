@@ -82,8 +82,17 @@ int main(int argc, char *argv[])
 	// uint32_t read_val = *((volatile uint32_t *)(pVecProc + 0x0));  // Read back from CSR
 	// printf("CSR written value: %u, CSR read value: %u\n", write_val, read_val);
 
-	// Issue 4: Task 2.1
+	/** Issue 4: */
+	// Step 1: Write 1 into CSR
 	uint32_t write_val = 1;
+	*((volatile uint32_t *)(pVecProc + 0x0)) = write_val;
+
+	// Step 2: Poll the CSR until it turns to 0
+	uint32_t read_val = 0x1;	//
+	while(read_val != 0x0) {
+		read_val = *((volatile uint32_t *)(pVecProc + 0x0));
+		printf("Readval: %u\n", read_val);
+	}
 
 
 	return 0; 

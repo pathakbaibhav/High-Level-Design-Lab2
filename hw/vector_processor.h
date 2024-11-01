@@ -14,7 +14,9 @@ public:
 	sc_out<bool> irq;
 	uint32_t CSR = 0;  // Control Status Register initialized to 0
 
-	sc_event start;	// Start event from issue 4
+	sc_core::sc_event start;	// Start event from issue 4
+
+	SC_HAS_PROCESS(vector_processor);
 
 	// Vectors initialization - may need to make this one array later on
 	uint32_t VA[16];
