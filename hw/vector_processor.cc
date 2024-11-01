@@ -23,7 +23,6 @@ vector_processor::vector_processor(sc_module_name name)
 {
 	socket.register_b_transport(this, &vector_processor::b_transport);
 	socket.register_transport_dbg(this, &vector_processor::transport_dbg);
-
 	SC_THREAD(op_thread);	// New SC Thread from issue 4
 }
 
@@ -39,6 +38,21 @@ void vector_processor::op_thread()
 		CSR = 0x0;		// opperation concluded, set to 0x0
 	}
 }
+
+// Processing thread function to simulate operation delay
+void vector_processor::op_thread()
+{
+	const sc_time delay = sc_time(5, SC_MS);
+
+	for(;;) {
+		wait(start);	// Wait on event start
+		wait(delay);	// Simulate 5 ms processing delay
+
+		CSR = 0x0;		// Operation concluded, set to 0x0
+	}
+}
+
+
 
 // called when a TLM transaction arrives for this target
 void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &delay)
@@ -113,7 +127,6 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			v = VC[idx];
 		}
 
-
 		memcpy(data, &v, len);
 
 	// handle write commands
@@ -129,7 +142,6 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			old_ts = now;
 		case 0x0:  // CSR write operation
             CSR = *(uint32_t*)data;  // Write data to CSR
-			
 			// Check if LSB is set
 			if (CSR & 0x1) {
 				// Set the start event
@@ -138,7 +150,6 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			}
 			break;
 
-		
 		default:
 			break;
 		}
@@ -154,7 +165,6 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			int idx = addr - 0x84;
 			VC[idx] = *(uint32_t*)data;
 		}
-
 
 	} else {
 		// no other commands supported
