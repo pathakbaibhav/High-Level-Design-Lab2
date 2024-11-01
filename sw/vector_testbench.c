@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <inttypes.h>
@@ -83,17 +84,23 @@ int main(int argc, char *argv[])
 	// printf("CSR written value: %u, CSR read value: %u\n", write_val, read_val);
 
 	/** Issue 4: */
-	// Step 1: Write 1 into CSR
-	uint32_t write_val = 1;
-	*((volatile uint32_t *)(pVecProc + 0x0)) = write_val;
+	// Setup
+	uint32_t write_val = 0x1;
+	uint32_t read_val = 0x1;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);	// should have error check here
 
-	// Step 2: Poll the CSR until it turns to 0
-	uint32_t read_val = 0x1;	//
-	while(read_val != 0x0) {
-		read_val = *((volatile uint32_t *)(pVecProc + 0x0));
+	// Run
+	*((volatile uint32_t *)(pVecProc + 0x0)) = write_val;		// Write to CSR
+	while(read_val != 0x0) {				
+		read_val = *((volatile uint32_t *)(pVecProc + 0x0));	// Poll CSR until its 0x0
 		printf("Readval: %u\n", read_val);
 	}
+	uint32_t time_val = *((volatile uint32_t *)(pVecProc + 0xC4));	// Get time from TRACE register
 
+	// Output
+	printf("QEMU start time: %lds %ldms			SystemC End Time: %uns\n\n", tv.tv_sec, tv.tv_usec, time_val);
+	
 
 	return 0; 
 }
