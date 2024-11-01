@@ -16,6 +16,8 @@ using namespace std;
 #include <sys/types.h>
 #include <time.h>
 
+#include <systemc.h>
+
 vector_processor::vector_processor(sc_module_name name)
 	: sc_module(name), socket("socket")
 {
@@ -28,9 +30,9 @@ vector_processor::vector_processor(sc_module_name name)
 // SCThread op
 void vector_processor::op_thread()
 {
-	sc_time delay = sc_time(5, SC_MS);
+	const sc_time delay = sc_time(5, SC_MS);
 
-	while (true) {
+	for(;;) {
 		wait(start);	// Wait on event start
 		wait(delay);	// Wait for 5ms
 
@@ -131,7 +133,7 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			// Check if LSB is set
 			if (CSR & 0x1) {
 				// Set the start event
-				start.notify()
+				start.notify();
 				// start.notify(SC_ZERO_TIME);	// need the SC_ZERO_TIME?
 			}
 			break;
