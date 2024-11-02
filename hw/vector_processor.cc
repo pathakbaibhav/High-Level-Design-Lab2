@@ -49,137 +49,125 @@ void vector_processor::op_thread()
 // called when a TLM transaction arrives for this target
 void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &delay)
 {
-	tlm::tlm_command cmd = trans.get_command();
-	sc_dt::uint64 addr = trans.get_address();
-	unsigned char *data = trans.get_data_ptr();
-	unsigned int len = trans.get_data_length();
-	unsigned char *byt = trans.get_byte_enable_ptr();
-	unsigned int wid = trans.get_streaming_width();
-	size_t offset;
+    tlm::tlm_command cmd = trans.get_command();
+    sc_dt::uint64 addr = trans.get_address();
+    unsigned char *data = trans.get_data_ptr();
+    unsigned int len = trans.get_data_length();
+    unsigned char *byt = trans.get_byte_enable_ptr();
+    unsigned int wid = trans.get_streaming_width();
 
-	// transactions with separate byte lanes are not supported
-	if (byt != 0) {
-		trans.set_response_status(tlm::TLM_BYTE_ENABLE_ERROR_RESPONSE);
-		return;
-	}
+    // Transactions with separate byte lanes are not supported
+    if (byt != 0) {
+        trans.set_response_status(tlm::TLM_BYTE_ENABLE_ERROR_RESPONSE);
+        return;
+    }
 
-	// bursts not supported
-	if (len > 4 || wid < len) {
-		trans.set_response_status(tlm::TLM_BURST_ERROR_RESPONSE);
-		return;
-	}
-	// besides that, let everything pass 
-	// note: even an access to a non existing MMR passes
-	trans.set_response_status(tlm::TLM_OK_RESPONSE);
+    // Bursts not supported
+    if (len > 4 || wid < len) {
+        trans.set_response_status(tlm::TLM_BURST_ERROR_RESPONSE);
+        return;
+    }
 
-	// Annotate that this target needs 1us to think 
-	// about how to answer an MMR request (not processing)
-	// This delay is on top of transport delay (which the iconnect should model).
-	delay += sc_time(1, SC_US);
+    // Besides that, let everything pass
+    // Note: even an access to a non-existing MMR passes
+    trans.set_response_status(tlm::TLM_OK_RESPONSE);
 
-	// force to catch up any quantum delay offset (to make it easier for now)
-	wait(delay);
-	delay = sc_time(0, SC_US);
+    // Annotate that this target needs 1us to think 
+    // about how to answer an MMR request (not processing)
+    // This delay is on top of transport delay (which the iconnect should model).
+    delay += sc_time(1, SC_US);
 
-	// compute current time (incl. any quantum offset if no sync above)
-	sc_time now = sc_time_stamp() + delay;
+    // Force to catch up any quantum delay offset (to make it easier for now)
+    wait(delay);
+    delay = sc_time(0, SC_US);
 
-	// handle reads commands
-	if (cmd == tlm::TLM_READ_COMMAND) {
-		static sc_time old_ts = SC_ZERO_TIME, diff;
-		uint32_t v = 0;
-		switch (addr)
-		{
-		case MMR_TRACE:
-			diff = now - old_ts; // diff to last TRACE read call
-			v = now.to_seconds() * 1000 * 1000 * 1000; // ns 
-			cout << "TRACE: "
-				 << " " << now << " diff=" << diff << "\n";
-			old_ts = now;
-			break;
-		case 0x0:  // CSR read operation
-            v = CSR;  // Read the CSR value
-			// cout << "CSR: " << v << "\n";
-			break;
-		case 0x04:	// VA base address is in data	-- might have to deal with length here
-			// for (int i=0;i<16;i++) {
-			// 	VA[i]= *((uint32_t*)data + (4*i));	// Read from VA
-			// }
-			memcpy((uint32_t*)data, VA, 16 * sizeof(uint32_t));
-			for (int i=0;i<16;i++) {
-				cout << "read " << VA[i] << endl;
-			}
-			break;
-		case 0x44:	// VB base addresss is in data
-			for (int i=0;i<16;i++) {
-				VB[i]= *((uint32_t*)data + (4*i));	// Read from VB
-			}
-			break;
-		case 0x84:	// VC base address is in data
-			for (int i=0;i<16;i++) {
-				VC[i]= *((uint32_t*)data + (4*i));	// Read from VC
-			}
-			break;
-		default:
-			break;
-		}
+    // Compute current time (including any quantum offset if no sync above)
+    sc_time now = sc_time_stamp() + delay;
 
+    // Variables for indexing into vectors
+    uint32_t index = 0;  
+    uint32_t v = 0;      
 
-		memcpy(data, &v, len);
+    // Handle read commands
+    if (cmd == tlm::TLM_READ_COMMAND) {
+        static sc_time old_ts = SC_ZERO_TIME, diff;
+        
+        switch (addr) {
+            case MMR_TRACE:
+                diff = now - old_ts;  // Time difference for TRACE reads
+                v = now.to_seconds() * 1000000000;  // Convert to ns
+                cout << "TRACE: " << now << " diff=" << diff << "\n";
+                old_ts = now;
+                break;
 
-	// handle write commands
-	} else if (cmd == tlm::TLM_WRITE_COMMAND) {
-		static sc_time old_ts = SC_ZERO_TIME, diff;
-		switch (addr) {
-		case MMR_TRACE:
-			diff = now - old_ts; // diff to last TRACE write call
-			cout << "TRACE: "
-				 << " "
-				 << hex << *(uint32_t *)data
-				 << ", " << now << " diff=" << diff << "\n";
-			old_ts = now;
-		case 0x0:  // CSR write operation
-            CSR = *(uint32_t*)data;  // Write data to CSR
-			// Check if LSB is set
-			if (CSR & 0x1) 
-			{
-				cout << "Starting the event: \n";
-				// Set the start event
-				start.notify();
-				// start.notify(SC_ZERO_TIME);	// need the SC_ZERO_TIME?
-			}
-			break;
-		case 0x04:	// VA base address is in data	-- might have to deal with length here
-			// cout << "here" << endl << addr << endl << data << endl << (uint32_t*)data << endl << *(uint32_t*)data << endl << endl;
-			// for (uint32_t i=0;i<16;i++) {
-			// 	*((uint32_t*)data + (4*i)) = VA[i];	// Write to VA
-			// }
-			memcpy(VA, (uint32_t*)data, 16 * sizeof(uint32_t));
-			for (int i=0;i<16;i++) {
-				cout << "write " << VA[i] << endl;
-			}
-			break;
-		case 0x44:	// VB base addresss is in data
-			for (int i=0;i<16;i++) {
-				*((uint32_t*)data + (4*i)) = VB[i];	// Write to VA
-			}
-			break;
-		case 0x84:	// VC base address is in data
-			for (int i=0;i<16;i++) {
-				*((uint32_t*)data + (4*i)) = VC[i];	// Write to VA
-			}
-			break; 
+            case 0x0:  // CSR read operation
+                v = CSR;
+                cout << "CSR: " << v << "\n";
+                break;
 
-		default:
-			break;
-		}
+            // Handle reads for vector arrays VA, VB, VC
+            default:
+                if (addr >= 0x04 && addr < 0x44) {  // VA range
+                    index = (addr - 0x04) / 4;
+                    v = VA[index];
+                } else if (addr >= 0x44 && addr < 0x84) {  // VB range
+                    index = (addr - 0x44) / 4;
+                    v = VB[index];
+                } else if (addr >= 0x84 && addr < 0xC4) {  // VC range
+                    index = (addr - 0x84) / 4;
+                    v = VC[index];
+                } else {
+                    trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
+                    return;
+                }
+                break;
+        }
+        memcpy(data, &v, len);  // Copy read value to data
 
+    // Handle write commands
+    } else if (cmd == tlm::TLM_WRITE_COMMAND) {
+        static sc_time old_ts = SC_ZERO_TIME, diff;
+        
+        switch (addr) {
+            case MMR_TRACE:
+                diff = now - old_ts;  // Time difference for TRACE writes
+                cout << "TRACE: " << hex << *(uint32_t *)data << ", " << now << " diff=" << diff << "\n";
+                old_ts = now;
+                break;
 
-	} else {
-		// no other commands supported
-		trans.set_response_status(tlm::TLM_COMMAND_ERROR_RESPONSE);
-	}
+            case 0x0:  // CSR write operation
+                CSR = *(uint32_t *)data;  // Update CSR
+                if (CSR & 0x1) {
+                    start.notify();  // Trigger start event if LSB is set
+                    cout << "Starting event\n";
+                }
+                break;
+
+            // Handle writes to vector arrays VA, VB, VC
+            default:
+                if (addr >= 0x04 && addr < 0x44) {  // VA range
+                    index = (addr - 0x04) / 4;
+                    VA[index] = *(uint32_t *)data;
+                } else if (addr >= 0x44 && addr < 0x84) {  // VB range
+                    index = (addr - 0x44) / 4;
+                    VB[index] = *(uint32_t *)data;
+                } else if (addr >= 0x84 && addr < 0xC4) {  // VC range
+                    index = (addr - 0x84) / 4;
+                    VC[index] = *(uint32_t *)data;
+                } else {
+                    trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
+                    return;
+                }
+                break;
+        }
+    } else {
+        // Unsupported commands
+        trans.set_response_status(tlm::TLM_COMMAND_ERROR_RESPONSE);
+    }
+
+    trans.set_response_status(tlm::TLM_OK_RESPONSE);
 }
+
 
 unsigned int vector_processor::transport_dbg(tlm::tlm_generic_payload &trans)
 {
