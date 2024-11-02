@@ -19,9 +19,9 @@ public:
 	SC_HAS_PROCESS(vector_processor);
 
 	// Vectors initialization - may need to make this one array later on
-	uint32_t VA[16];
-	uint32_t VB[16];
-	uint32_t VC[16];
+	uint32_t* VA;
+	uint32_t* VB;
+	uint32_t* VC;
 
 	vector_processor(sc_core::sc_module_name name);
 	void op_thread();

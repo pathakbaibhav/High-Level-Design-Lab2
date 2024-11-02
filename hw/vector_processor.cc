@@ -24,6 +24,11 @@ vector_processor::vector_processor(sc_module_name name)
 	socket.register_b_transport(this, &vector_processor::b_transport);
 	socket.register_transport_dbg(this, &vector_processor::transport_dbg);
 	SC_THREAD(op_thread);	// New SC Thread from issue 4
+
+	VA = (uint32_t*)malloc(16*sizeof(uint32_t));
+	VB = (uint32_t*)malloc(16*sizeof(uint32_t));
+	VC = (uint32_t*)malloc(16*sizeof(uint32_t));
+
 }
 
 // Processing thread function to simulate operation delay
@@ -50,6 +55,7 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 	unsigned int len = trans.get_data_length();
 	unsigned char *byt = trans.get_byte_enable_ptr();
 	unsigned int wid = trans.get_streaming_width();
+	size_t offset;
 
 	// transactions with separate byte lanes are not supported
 	if (byt != 0) {
@@ -93,21 +99,25 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			break;
 		case 0x0:  // CSR read operation
             v = CSR;  // Read the CSR value
-			cout << "CSR: " << v << "\n";
+			// cout << "CSR: " << v << "\n";
 			break;
 		case 0x04:	// VA base address is in data	-- might have to deal with length here
+			// for (int i=0;i<16;i++) {
+			// 	VA[i]= *((uint32_t*)data + (4*i));	// Read from VA
+			// }
+			memcpy((uint32_t*)data, VA, 16 * sizeof(uint32_t));
 			for (int i=0;i<16;i++) {
-				VA[i]= *(uint32_t*)data + (4*i);	// Read from VA
+				cout << "read " << VA[i] << endl;
 			}
 			break;
 		case 0x44:	// VB base addresss is in data
 			for (int i=0;i<16;i++) {
-				VB[i]= *(uint32_t*)data + (4*i);	// Read from VB
+				VB[i]= *((uint32_t*)data + (4*i));	// Read from VB
 			}
 			break;
 		case 0x84:	// VC base address is in data
 			for (int i=0;i<16;i++) {
-				VC[i]= *(uint32_t*)data + (4*i);	// Read from VC
+				VC[i]= *((uint32_t*)data + (4*i));	// Read from VC
 			}
 			break;
 		default:
@@ -140,8 +150,13 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			}
 			break;
 		case 0x04:	// VA base address is in data	-- might have to deal with length here
-			for (uint32_t i=0;i<16;i++) {
-				*((uint32_t*)data + (4*i)) = VA[i];	// Write to VA
+			// cout << "here" << endl << addr << endl << data << endl << (uint32_t*)data << endl << *(uint32_t*)data << endl << endl;
+			// for (uint32_t i=0;i<16;i++) {
+			// 	*((uint32_t*)data + (4*i)) = VA[i];	// Write to VA
+			// }
+			memcpy(VA, (uint32_t*)data, 16 * sizeof(uint32_t));
+			for (int i=0;i<16;i++) {
+				cout << "write " << VA[i] << endl;
 			}
 			break;
 		case 0x44:	// VB base addresss is in data

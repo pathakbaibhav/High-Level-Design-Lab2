@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
 	{
         // Reading the value from CSR
         uint32_t val = *((volatile uint32_t *)(pVecProc + CSR_OFFSET));
+		printf("CSR VALUE: %u\n", val);
+
         if (val == 0x0) 
 		{
             gettimeofday(&tv, NULL);
@@ -76,28 +78,32 @@ int main(int argc, char *argv[])
 	uint32_t VC[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	// Initialize MMRs with base addresses
-	*((volatile uint32_t *)(pVecProc + 0x04)) = VA;
-	*((volatile uint32_t *)(pVecProc + 0x44)) = VB;
-	*((volatile uint32_t *)(pVecProc + 0x84)) = VC;
+	*((volatile uint32_t *)(pVecProc + 0x04)) = *VA;
+	// *((volatile uint32_t *)(pVecProc + 0x44)) = VB;
+	// *((volatile uint32_t *)(pVecProc + 0x84)) = VC;
+	// volatile uint32_t *va_addr = (volatile uint32_t *)(pVecProc + 0x04);
+    // for(int i = 0; i < 16; i++) {
+	// 	printf("%u\n", VA[i]);
+    //     va_addr[i] = VA[i];
+    // }
+
+	// volatile uint32_t *vb_addr = (volatile uint32_t *)(pVecProc + 0x44);
+    // for(int i = 0; i < 16; i++) {
+    //     vb_addr[i] = VB[i];
+    // }
+    
+    // volatile uint32_t *vc_addr = (volatile uint32_t *)(pVecProc + 0x84);
+    // for(int i = 0; i < 16; i++) {
+    //     vc_addr[i] = VC[i];
+    // }
 
 	// Start the accelerator
-	*((volatile uint32_t *)(pVecProc + CSR_OFFSET)) = 0x1;
+    *csr_reg = 0x1;
 
-	// Wait on accelerator completion
-	// Wait for CSR to become 0
-	uint32_t csrVal = 0x1;
-	// while (csrVal != 0x0) {
-	// 	uint32_t csrVal = *((volatile uint32_t *)(pVecProc + CSR_OFFSET));
-	// }
-
-	// Read and print arrays
-	uint32_t* newVA = *((volatile uint32_t *)(pVecProc + 0x04));
-	uint32_t* newVB = *((volatile uint32_t *)(pVecProc + 0x44));
-	uint32_t* newVC = *((volatile uint32_t *)(pVecProc + 0x84));
-	for (int i=0;i<16;i++) {
-		printf("%u ", newVA[i]);
-	}
-
+    // Wait for CSR to become 0
+    while (*csr_reg != 0x0) {
+        usleep(100);
+    }
 
 	return 0; 
 }
