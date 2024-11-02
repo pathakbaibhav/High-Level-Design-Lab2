@@ -3,27 +3,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <inttypes.h>
-
-/// base address of debug device (physical)
-#define SYSTEMC_DEVICE_ADDR (0x48000000)
-
-#define MESSAGE_OFFSET (0x04)
-
-// #define ERROR_ADDR_OFFSET (0xf0)
-
-// #define STOP_SIM_OFFSET (0x08)
+#include <sys/time.h>
 
 // base address of vector processor
 #define VECTOR_PROCESSOR_ADDR (0x49000000)
 
+#define CSR_OFFSET (0x0)
+
 int main(int argc, char *argv[])
 {
 	int fd;       /// file descriptor to phys mem
-	void *pDev;   /// pointer to base address of device (mapped into user's virtual mem)
 	void *pVecProc;  /// pointer to base address of vector processor
 	unsigned page_size=sysconf(_SC_PAGESIZE);  /// get page size 
 
@@ -34,76 +26,49 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	/// get a pointer in process' virtual memory that points to the physcial address of the device
-	pDev = mmap(NULL,page_size,PROT_READ|PROT_WRITE,MAP_SHARED,fd,(SYSTEMC_DEVICE_ADDR & ~(page_size-1)));
-
 	pVecProc = mmap(NULL, page_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, (VECTOR_PROCESSOR_ADDR & ~(page_size - 1)));
 	if (pVecProc == MAP_FAILED) {
 		perror("Failed to map vector processor");
 		close(fd);
 		exit(-1);
 	}
-	
-	//Message
-	const char *msg = "Cosimulation Works";
 
-	unsigned char *msg_reg = (volatile unsigned char *)(pDev + MESSAGE_OFFSET);
+	// initialize the CSR register
+    volatile uint32_t *csr_reg = (volatile uint32_t *)(pVecProc + CSR_OFFSET);
 
-	// printf("Reading debugdev timer every 200ms\n");
-	for(int i = 0; i < 10; i++) 
+    // Setting the value into CSR
+    *csr_reg = 1;
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    // Convert to nanoseconds
+    long long old_qemu = tv.tv_sec * 1000000000LL + tv.tv_usec * 1000; // Convert seconds to ns and microseconds to ns
+
+    // Read SystemC time
+    volatile uint32_t *trace_reg = (volatile uint32_t *)(pVecProc + 0xC4);
+
+    // Read time
+    uint32_t curr_time = *trace_reg;
+    printf("Current Time (SystemC): %u\n", curr_time);
+
+    while (1) 
 	{
-		*msg_reg = msg[i];
-		usleep(100000);
-		// read the base register of the debug device (offset 0)
-		//uint64_t val = *((unsigned int*) (pDev+ 0));
-		//printf("TIMER = %llu\n", val);
-	}
+        // Reading the value from CSR
+        uint32_t val = *((volatile uint32_t *)(pVecProc + CSR_OFFSET));
+        if (val == 0x0) 
+		{
+            gettimeofday(&tv, NULL);
+            long long now_qemu = tv.tv_sec * 1000000000LL + tv.tv_usec * 1000; // Convert seconds to ns and microseconds to ns
+            uint32_t now_sysc = *trace_reg;
+            long long diff_time = now_qemu - old_qemu;
+            uint32_t diff = now_sysc - curr_time;
+            printf("Time took (QEMU): %lld\n", diff_time);
+            printf("Time took (SystemC): %u\n", diff);
+            break;
+        }
+    }
 
-	// *msg_reg = *(unsigned char *)"\n";
-	// printf("Message sent to debug device: %s\n", msg);
-
-	//Issue 2: Task 3.2
-	// int val = *((volatile int *)(pDev + ERROR_ADDR_OFFSET));
-	// printf("Value read from address 0x%x: %d\n", ERROR_ADDR_OFFSET, val);
-
-	//Issue 2: Task 3.3
-	// Timer reading
-    // uint64_t timer_val = *((uint64_t *)(pDev));
-    // printf("Final TIMER value read: %" PRIu64 "\n", timer_val);
-
-    // Stop simulation
-    // *(volatile uint32_t *)(pDev + STOP_SIM_OFFSET) = 1;  // Writing to 0x8 to stop the simulation
-    // printf("Simulation stop command sent.\n");
-
-	// Issue 3: Task 2.2
-	// Write and verify CSR value in vector processor
-	// uint32_t write_val = 07;
-	// *((volatile uint32_t *)(pVecProc + 0x0)) = write_val;  // Write to CSR
-	
-	// uint32_t read_val = *((volatile uint32_t *)(pVecProc + 0x0));  // Read back from CSR
-	// printf("CSR written value: %u, CSR read value: %u\n", write_val, read_val);
-
-	/** Issue 4: */
-	// Setup
-	uint32_t write_val = 0x1;
-	uint32_t read_val = 0x1;
-	struct timeval tv;
-	gettimeofday(&tv, NULL);	// should have error check here
-
-	// Run
-	*((volatile uint32_t *)(pVecProc + 0x0)) = write_val;		// Write to CSR
-	while(read_val != 0x0) {				
-		read_val = *((volatile uint32_t *)(pVecProc + 0x0));	// Poll CSR until its 0x0
-		printf("Readval: %u\n", read_val);
-	}
-	uint32_t time_val = *((volatile uint32_t *)(pVecProc + 0xC4));	// Get time from TRACE register
-
-	// Output
-	printf("QEMU start time: %lds %ldms			SystemC End Time: %uns\n\n", tv.tv_sec, tv.tv_usec, time_val);
-
-
-	/** Issue 5 */
-	
 
 	return 0; 
 }
