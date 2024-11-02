@@ -97,17 +97,17 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			break;
 		case 0x04:	// VA base address is in data	-- might have to deal with length here
 			for (int i=0;i<16;i++) {
-				VA[i]= data + (4*i);	// Read from VA
+				VA[i]= *(uint32_t*)data + (4*i);	// Read from VA
 			}
 			break;
 		case 0x44:	// VB base addresss is in data
 			for (int i=0;i<16;i++) {
-				VB[i]= data + (4*i);	// Read from VB
+				VB[i]= *(uint32_t*)data + (4*i);	// Read from VB
 			}
 			break;
 		case 0x84:	// VC base address is in data
 			for (int i=0;i<16;i++) {
-				VC[i]= data + (4*i);	// Read from VC
+				VC[i]= *(uint32_t*)data + (4*i);	// Read from VC
 			}
 			break;
 		default:
@@ -140,18 +140,18 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 			}
 			break;
 		case 0x04:	// VA base address is in data	-- might have to deal with length here
-			for (int i=0;i<16;i++) {
-				*(uint32_t*)(data + (4*i)) = VA[i];	// Write to VA
+			for (uint32_t i=0;i<16;i++) {
+				*((uint32_t*)data + (4*i)) = VA[i];	// Write to VA
 			}
 			break;
 		case 0x44:	// VB base addresss is in data
 			for (int i=0;i<16;i++) {
-				*(uint32_t*)(data + (4*i)) = VB[i];	// Write to VA
+				*((uint32_t*)data + (4*i)) = VB[i];	// Write to VA
 			}
 			break;
 		case 0x84:	// VC base address is in data
 			for (int i=0;i<16;i++) {
-				*(uint32_t*)(data + (4*i)) = VC[i];	// Write to VA
+				*((uint32_t*)data + (4*i)) = VC[i];	// Write to VA
 			}
 			break; 
 

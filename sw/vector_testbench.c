@@ -69,6 +69,35 @@ int main(int argc, char *argv[])
         }
     }
 
+	/** Issue 5 */
+	// Initialize VA, VB, VC
+	uint32_t VA[16] = {1,5,3,4,1,55,3,91,12,12,5,31,88,87,3,5};
+	uint32_t VB[16] = {5,1,56,8,4,35,6,2,65,12,3,56,1,6,543,3};
+	uint32_t VC[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	// Initialize MMRs with base addresses
+	*((volatile uint32_t *)(pVecProc + 0x04)) = VA;
+	*((volatile uint32_t *)(pVecProc + 0x44)) = VB;
+	*((volatile uint32_t *)(pVecProc + 0x84)) = VC;
+
+	// Start the accelerator
+	*((volatile uint32_t *)(pVecProc + CSR_OFFSET)) = 0x1;
+
+	// Wait on accelerator completion
+	// Wait for CSR to become 0
+	uint32_t csrVal = 0x1;
+	// while (csrVal != 0x0) {
+	// 	uint32_t csrVal = *((volatile uint32_t *)(pVecProc + CSR_OFFSET));
+	// }
+
+	// Read and print arrays
+	uint32_t* newVA = *((volatile uint32_t *)(pVecProc + 0x04));
+	uint32_t* newVB = *((volatile uint32_t *)(pVecProc + 0x44));
+	uint32_t* newVC = *((volatile uint32_t *)(pVecProc + 0x84));
+	for (int i=0;i<16;i++) {
+		printf("%u ", newVA[i]);
+	}
+
 
 	return 0; 
 }
