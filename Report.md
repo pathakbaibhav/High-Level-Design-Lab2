@@ -58,6 +58,6 @@ The differences between QEMU-reported and SystemC-reported times are attributed 
 
 - **QEMU Real-time Simulation**: QEMU aims to emulate real time, often faster than SystemC’s discrete-event clock.
 - **SystemC Event-driven Time**: SystemC’s time advances only when events occur, reflecting a simulated hardware timing more precisely.
-- **Cosimulation Asynchrony**: QEMU and SystemC operate on independent time domains, leading to inevitable time desynchronization between real-world and simulated environments.
+- **Cosimulation Asynchrony**: QEMU and SystemC operate on independent time domains, leading to inevitable time desynchronization between real-world and simulated environments. 
 
 --- 
