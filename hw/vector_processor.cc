@@ -39,9 +39,34 @@ void vector_processor::op_thread()
 	for(;;) {
         wait(start);    // Wait for the start event to trigger processing
 
-        // Perform the vector addition operation
-        for (int i = 0; i < 16; i++) {
-            VC[i] = VA[i] + VB[i];
+        switch (CSR){
+            case 0x1:   // Add
+                for (int i = 0; i < 16; i++) {
+                    VC[i] = VA[i] + VB[i];
+                }
+                break;
+            case 0x2:   // Subtract
+                for (int i=0; i<16;i++) {
+                    VC[i] = VA[i] - VB[i];
+                }
+                break;
+            case 0x3:   // Multiply
+                for (int i=0; i<16;i++) {
+                    VC[i] = VA[i] * VB[i];
+                }
+                break;
+            case 0x4:   // Divide
+                for (int i=0; i<16;i++) {
+                    VC[i] = VA[i] / VB[i];
+                }
+                break;
+            case 0x5:   // Multiply AND Accumulate
+                for (int i=0; i<16; i++) {
+                    VC[i] = VA[i] * VB[i] + VC[i];
+                }
+                break;
+            default:
+                break;
         }
 
         wait(sc_time(5, SC_MS));  // Simulate processing delay
@@ -143,7 +168,7 @@ void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &del
 
             case 0x0:  // CSR write operation
                 CSR = *(uint32_t *)data;  // Update CSR
-                if (CSR & 0x1) {
+                if (CSR >= 0x1 && CSR <= 0x5) {
                     start.notify();  // Trigger start event if LSB is set
                     cout << "Starting event\n";
                 }

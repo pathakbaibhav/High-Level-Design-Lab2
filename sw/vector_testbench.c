@@ -85,6 +85,100 @@ int main(int argc, char *argv[]) {
         printf("Vector addition test failed with %d errors.\n", errors);
     }
 
+
+
+    /** Test subtraction */
+    *csr_reg = 0x2;
+    while (*csr_reg != 0) {
+        usleep(100);  // Polling delay
+    }
+    printf("VC result:\n");
+    for (int i = 0; i < 16; ++i) {
+        uint32_t expected = VA[i] - VB[i];
+        uint32_t result = vc_reg[i];
+        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
+        if (result != expected) {
+            errors++;
+        }
+    }
+    if (errors == 0) {
+        printf("Vector subtraction test passed!\n");
+    } else {
+        printf("Vector subtration test failed with %d errors.\n", errors);
+    }
+
+
+    /** Test Multiplication */
+    *csr_reg = 0x3;
+    while (*csr_reg != 0) {
+        usleep(100);  // Polling delay
+    }
+    printf("VC result:\n");
+    for (int i = 0; i < 16; ++i) {
+        uint32_t expected = VA[i] * VB[i];
+        uint32_t result = vc_reg[i];
+        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
+        if (result != expected) {
+            errors++;
+        }
+    }
+    if (errors == 0) {
+        printf("Vector multiply test passed!\n");
+    } else {
+        printf("Vector multiply test failed with %d errors.\n", errors);
+    }
+
+    /** Test Divide */
+    *csr_reg = 0x4;
+    while (*csr_reg != 0) {
+        usleep(100);  // Polling delay
+    }
+    printf("VC result:\n");
+    for (int i = 0; i < 16; ++i) {
+        uint32_t expected = VA[i] / VB[i];
+        uint32_t result = vc_reg[i];
+        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
+        if (result != expected) {
+            errors++;
+        }
+    }
+    if (errors == 0) {
+        printf("Vector divide test passed!\n");
+    } else {
+        printf("Vector divide test failed with %d errors.\n", errors);
+    }
+
+    /** Test Multiply and Accumulate */
+    uint32_t VC[16];    // Initialize VC and populate with last VC from accelerator
+    for (int i=0;i<16;i++) {
+        VC[i] = vc_reg[i];
+    }
+
+    *csr_reg = 0x5;
+    while (*csr_reg != 0) {
+        usleep(100);  // Polling delay
+    }
+    printf("VC result:\n");
+    for (int i = 0; i < 16; ++i) {
+        uint32_t expected = (VA[i] * VB[i]) + VC[i];
+        uint32_t result = vc_reg[i];
+        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
+        if (result != expected) {
+            errors++;
+        }
+    }
+    if (errors == 0) {
+        printf("Vector multiply and accumulate test passed!\n");
+    } else {
+        printf("Vector multiply and accumulate test failed with %d errors.\n", errors);
+    }
+
+
+
+
+
+
+
     munmap(pVecProc, page_size);
     close(fd);
     return 0;
