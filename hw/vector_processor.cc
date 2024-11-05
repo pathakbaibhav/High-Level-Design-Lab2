@@ -37,11 +37,17 @@ void vector_processor::op_thread()
 	const sc_time delay = sc_time(5, SC_MS);
 
 	for(;;) {
-		wait(start);	// Wait on event start
-		wait(delay);	// Simulate 5 ms processing delay
+        wait(start);    // Wait for the start event to trigger processing
 
-		CSR = 0x0;		// Operation concluded, set to 0x0
-	}
+        // Perform the vector addition operation
+        for (int i = 0; i < 16; i++) {
+            VC[i] = VA[i] + VB[i];
+        }
+
+        wait(sc_time(5, SC_MS));  // Simulate processing delay
+        
+        CSR = 0x0;  // Operation concluded, reset CSR to 0
+    }
 }
 
 

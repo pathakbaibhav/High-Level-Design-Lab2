@@ -45,10 +45,19 @@ int main(int argc, char *argv[]) {
     volatile uint32_t *vc_reg = (volatile uint32_t *)(pVecProc + VC_OFFSET);
 
     // Write VA and VB to vector processor registers
+    printf("Writing values to VA:\n");
     for (int i = 0; i < 16; ++i) {
         va_reg[i] = VA[i];
-        vb_reg[i] = VB[i];
+        printf("%u ", VA[i]);
     }
+    printf("\n");
+
+    printf("Writing values to VB:\n");
+    for (int i = 0; i < 16; ++i) {
+        vb_reg[i] = VB[i];
+        printf("%u ", VB[i]);
+    }
+    printf("\n");
 
     // Trigger the vector addition
     *csr_reg = 1;
