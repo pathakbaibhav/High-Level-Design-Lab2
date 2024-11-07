@@ -32,7 +32,10 @@ void vector_processor::op_thread()
     const sc_time delay = sc_time(5, SC_MS);
 
     for(;;) {
-        wait(start);
+        wait(start);    // Wait for the start event to trigger processing
+
+        // Simulate processing delay before performing the operation
+        wait(delay);  // Simulate 5ms processing delay
 
         switch (CSR) {
             case 0x1:   // Add
@@ -41,22 +44,22 @@ void vector_processor::op_thread()
                 }
                 break;
             case 0x2:   // Subtract
-                for (int i=0; i<16;i++) {
+                for (int i = 0; i < 16; i++) {
                     VC[i] = VA[i] - VB[i];
                 }
                 break;
             case 0x3:   // Multiply
-                for (int i=0; i<16;i++) {
+                for (int i = 0; i < 16; i++) {
                     VC[i] = VA[i] * VB[i];
                 }
                 break;
             case 0x4:   // Divide
-                for (int i=0; i<16;i++) {
-                    VC[i] = (VB[i] != 0) ? VA[i] / VB[i] : 0;  // Handle divide by zero
+                for (int i = 0; i < 16; i++) {
+                    VC[i] = VB[i] != 0 ? VA[i] / VB[i] : 0;  // Avoid division by zero
                 }
                 break;
             case 0x5:   // Multiply and Accumulate
-                for (int i=0; i<16; i++) {
+                for (int i = 0; i < 16; i++) {
                     VC[i] += VA[i] * VB[i];
                 }
                 break;
@@ -64,10 +67,10 @@ void vector_processor::op_thread()
                 break;
         }
 
-        wait(delay);  // Simulate processing delay
-        CSR = 0x0;    // Operation concluded, reset CSR
+        CSR = 0x0;  // Operation concluded, reset CSR to 0
     }
 }
+
 
 void vector_processor::b_transport(tlm::tlm_generic_payload &trans, sc_time &delay)
 {
