@@ -4,7 +4,6 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <sys/time.h>
 
 // base address of vector processor
 #define VECTOR_PROCESSOR_ADDR (0x49000000)
@@ -13,12 +12,28 @@
 #define VB_OFFSET 0x44
 #define VC_OFFSET 0x84
 
+void validate_result(volatile uint32_t *vc_reg, uint32_t *expected, const char *operation) {
+    int errors = 0;
+    printf("VC result after %s:\n", operation);
+    for (int i = 0; i < 16; ++i) {
+        uint32_t result = vc_reg[i];
+        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected[i]);
+        if (result != expected[i]) {
+            errors++;
+        }
+    }
+    if (errors == 0) {
+        printf("%s test passed!\n", operation);
+    } else {
+        printf("%s test failed with %d errors.\n", operation, errors);
+    }
+}
+
 int main(int argc, char *argv[]) {
     int fd;
     void *pVecProc;
     unsigned page_size = sysconf(_SC_PAGESIZE);
 
-    // Open device file for physical memory
     fd = open("/dev/mem", O_RDWR);
     if (fd < 1) {
         perror("Failed to open /dev/mem");
@@ -32,152 +47,56 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    // Map pointers to CSR and trace registers
     volatile uint32_t *csr_reg = (volatile uint32_t *)(pVecProc + CSR_OFFSET);
-    volatile uint32_t *trace_reg = (volatile uint32_t *)(pVecProc + 0xC4);
-
-    // Initialize vectors VA, VB, and clear VC in mapped memory
-    uint32_t VA[16] = {1, 5, 3, 4, 1, 55, 3, 91, 12, 12, 5, 31, 88, 87, 3, 5};
-    uint32_t VB[16] = {5, 1, 56, 8, 4, 35, 6, 2, 65, 12, 3, 56, 1, 6, 543, 3};
-
     volatile uint32_t *va_reg = (volatile uint32_t *)(pVecProc + VA_OFFSET);
     volatile uint32_t *vb_reg = (volatile uint32_t *)(pVecProc + VB_OFFSET);
     volatile uint32_t *vc_reg = (volatile uint32_t *)(pVecProc + VC_OFFSET);
 
-    // Write VA and VB to vector processor registers
-    printf("Writing values to VA:\n");
+    uint32_t VA[16] = {1, 5, 3, 4, 1, 55, 3, 91, 12, 12, 5, 31, 88, 87, 3, 5};
+    uint32_t VB[16] = {5, 1, 56, 8, 4, 35, 6, 2, 65, 12, 3, 56, 1, 6, 543, 3};
+
+    printf("Writing values to VA and VB:\n");
     for (int i = 0; i < 16; ++i) {
         va_reg[i] = VA[i];
-        printf("%u ", VA[i]);
-    }
-    printf("\n");
-
-    printf("Writing values to VB:\n");
-    for (int i = 0; i < 16; ++i) {
         vb_reg[i] = VB[i];
-        printf("%u ", VB[i]);
+        printf("VA[%d] = %u, VB[%d] = %u\n", i, VA[i], i, VB[i]);
     }
-    printf("\n");
 
-    // Trigger the vector addition
+    // Add operation
     *csr_reg = 1;
+    while (*csr_reg != 0) usleep(100);
+    uint32_t expected_add[16];
+    for (int i = 0; i < 16; ++i) expected_add[i] = VA[i] + VB[i];
+    validate_result(vc_reg, expected_add, "Addition");
 
-    // Wait for completion (CSR becomes 0)
-    while (*csr_reg != 0) {
-        usleep(100);  // Polling delay
-    }
-
-    // Read and verify the result in VC
-    int errors = 0;
-    printf("VC result:\n");
-    for (int i = 0; i < 16; ++i) {
-        uint32_t expected = VA[i] + VB[i];
-        uint32_t result = vc_reg[i];
-        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
-        if (result != expected) {
-            errors++;
-        }
-    }
-
-    if (errors == 0) {
-        printf("Vector addition test passed!\n");
-    } else {
-        printf("Vector addition test failed with %d errors.\n", errors);
-    }
-
-
-
-    /** Test subtraction */
+    // Subtract operation
     *csr_reg = 0x2;
-    while (*csr_reg != 0) {
-        usleep(100);  // Polling delay
-    }
-    printf("VC result:\n");
-    for (int i = 0; i < 16; ++i) {
-        uint32_t expected = VA[i] - VB[i];
-        uint32_t result = vc_reg[i];
-        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
-        if (result != expected) {
-            errors++;
-        }
-    }
-    if (errors == 0) {
-        printf("Vector subtraction test passed!\n");
-    } else {
-        printf("Vector subtration test failed with %d errors.\n", errors);
-    }
+    while (*csr_reg != 0) usleep(100);
+    uint32_t expected_sub[16];
+    for (int i = 0; i < 16; ++i) expected_sub[i] = VA[i] - VB[i];
+    validate_result(vc_reg, expected_sub, "Subtraction");
 
-
-    /** Test Multiplication */
+    // Multiply operation
     *csr_reg = 0x3;
-    while (*csr_reg != 0) {
-        usleep(100);  // Polling delay
-    }
-    printf("VC result:\n");
-    for (int i = 0; i < 16; ++i) {
-        uint32_t expected = VA[i] * VB[i];
-        uint32_t result = vc_reg[i];
-        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
-        if (result != expected) {
-            errors++;
-        }
-    }
-    if (errors == 0) {
-        printf("Vector multiply test passed!\n");
-    } else {
-        printf("Vector multiply test failed with %d errors.\n", errors);
-    }
+    while (*csr_reg != 0) usleep(100);
+    uint32_t expected_mul[16];
+    for (int i = 0; i < 16; ++i) expected_mul[i] = VA[i] * VB[i];
+    validate_result(vc_reg, expected_mul, "Multiplication");
 
-    /** Test Divide */
+    // Division operation
     *csr_reg = 0x4;
-    while (*csr_reg != 0) {
-        usleep(100);  // Polling delay
-    }
-    printf("VC result:\n");
-    for (int i = 0; i < 16; ++i) {
-        uint32_t expected = VA[i] / VB[i];
-        uint32_t result = vc_reg[i];
-        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
-        if (result != expected) {
-            errors++;
-        }
-    }
-    if (errors == 0) {
-        printf("Vector divide test passed!\n");
-    } else {
-        printf("Vector divide test failed with %d errors.\n", errors);
-    }
+    while (*csr_reg != 0) usleep(100);
+    uint32_t expected_div[16];
+    for (int i = 0; i < 16; ++i) expected_div[i] = VB[i] != 0 ? VA[i] / VB[i] : 0;
+    validate_result(vc_reg, expected_div, "Division");
 
-    /** Test Multiply and Accumulate */
-    uint32_t VC[16];    // Initialize VC and populate with last VC from accelerator
-    for (int i=0;i<16;i++) {
-        VC[i] = vc_reg[i];
-    }
-
+    // Multiply and Accumulate operation
+    for (int i = 0; i < 16; ++i) vc_reg[i] = expected_add[i];
     *csr_reg = 0x5;
-    while (*csr_reg != 0) {
-        usleep(100);  // Polling delay
-    }
-    printf("VC result:\n");
-    for (int i = 0; i < 16; ++i) {
-        uint32_t expected = (VA[i] * VB[i]) + VC[i];
-        uint32_t result = vc_reg[i];
-        printf("VC[%d] = %u (Expected: %u)\n", i, result, expected);
-        if (result != expected) {
-            errors++;
-        }
-    }
-    if (errors == 0) {
-        printf("Vector multiply and accumulate test passed!\n");
-    } else {
-        printf("Vector multiply and accumulate test failed with %d errors.\n", errors);
-    }
-
-
-
-
-
-
+    while (*csr_reg != 0) usleep(100);
+    uint32_t expected_mac[16];
+    for (int i = 0; i < 16; ++i) expected_mac[i] = VA[i] * VB[i] + expected_add[i];
+    validate_result(vc_reg, expected_mac, "Multiply and Accumulate");
 
     munmap(pVecProc, page_size);
     close(fd);
